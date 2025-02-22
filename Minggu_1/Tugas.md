@@ -6,7 +6,7 @@
 1.	Analisa File http.cap
 </h2>
     a.	Versi HTTP :<br>
-    ![Gambar_1](./img/Screenshot 2025-02-22 113520.png)<br>
+    ![Gambar_1](img/versi-http)<br>
   	Dapat dilihat di baris 4 yang mana menunjukkan HTTP request dengan metode GET, di akhir baris 4 terdapat HTTP/1.1 yang menunjukkan versi dari HTTP tersebut yaitu 1.1. Kemudian ada juga di baris 27 dan 38 terdapat juga HTTP/1.1. Sehingga versi HTTP yang digunakan pada proses komunikasi tersebut adalah HTTP/1.1
    
     b.	IP address Client dan Server<br>
