@@ -29,6 +29,9 @@ Mengetahui waktunya dengan melihat paket yang mengirimkan HTTP Request, dapat di
   	
 d. Waktu server menerima response
 
+![Gambar_5](img/response-time.png)
+![Gambar_5](img/response-time-2.png)
+
 Waktu server menerima adalah 4.846969
   
 e. Waktu tranfer dan response dari client ke server
