@@ -49,7 +49,7 @@ Sehingga, waktu yang dibutuhkan untuk transfer dan response dari client ke serve
 2.	Analisis Gambar
 </h2>
 
-![Gambar_2](img/no-2.png)
+![Gambar_2](img/no-2)
 
 Berdasarkan gambar tersebut terdapat beberapa jenis pengiriman yang terjadi :
 
@@ -71,3 +71,34 @@ Pengiriman process-to-process berfokus pada komunikasi antara aplikasi di perang
 
 a. Connection establishment
 
+![Gambar_3](img/establishment.png)
+
+Tahap ini dikenal sebagai three-way handshake, yang bertujuan untuk membangun koneksi yang andal antara pengirim dan penerima.
+- SYN (Synchronize) → Pengirim mengirimkan paket SYN ke penerima untuk meminta koneksi.
+- SYN-ACK (Synchronize-Acknowledge) → Penerima merespons dengan paket SYN-ACK untuk menyetujui koneksi.
+- ACK (Acknowledge) → Pengirim mengirimkan paket ACK sebagai konfirmasi bahwa koneksi berhasil dibangun.
+
+Setelah ketiga langkah ini selesai, koneksi dianggap berhasil dibangun, dan kedua perangkat siap bertukar data.
+
+b. Data tranfer
+
+![Gambar_3](img/transfer.png)
+
+- Segmentasi Data → Data dibagi menjadi beberapa segmen untuk dikirim secara berurutan.
+- Pemberian Nomor Urut (Sequence Number) → Setiap segmen memiliki nomor urut untuk memastikan data tersusun dengan benar.
+- Pengiriman dan Konfirmasi (ACK) → Setiap segmen yang diterima akan dikonfirmasi dengan ACK oleh penerima.
+- Retransmisi (Jika Diperlukan) → Jika segmen hilang atau rusak, pengirim akan mengirim ulang data berdasarkan mekanisme timeout atau notifikasi penerima.
+- Flow Control → TCP menggunakan mekanisme seperti window size untuk mengatur kecepatan pengiriman agar tidak membebani penerima.
+
+c. Connection termination
+
+![Gambar_3](img/termination.png)
+
+Setelah data berhasil dikirim, koneksi harus ditutup dengan cara yang teratur untuk menghindari gangguan. Proses ini disebut four-way handshake, yang melibatkan empat langkah utama 
+
+- FIN (Finish) dari Pengirim → Pengirim mengirimkan paket FIN untuk mengakhiri koneksi.
+- ACK dari Penerima → Penerima mengakui permintaan dengan mengirimkan paket ACK.
+- FIN dari Penerima → Penerima juga mengirimkan FIN untuk menutup koneksi dari sisinya.
+- ACK dari Pengirim → Pengirim mengirimkan ACK terakhir sebagai konfirmasi bahwa koneksi telah sepenuhnya ditutup.
+
+ Setelah semua langkah selesai, kedua perangkat mengakhiri sesi komunikasi secara aman.
