@@ -30,11 +30,17 @@ Mengetahui waktunya dengan melihat paket yang mengirimkan HTTP Request, dapat di
 d. Waktu server menerima response
 
 ![Gambar_5](img/response-time.png)
+
+Bisa dilihat pada kolom time tersebut menunjukkan waktu HTTP response dari request si client pada baris 4. Bisa dilihat juga di HTTP request, buka bagian Hypertext Transfer Protocol dan cari informasi "[Response In frame: 38]". Memberitahu Informasi paket yang berisi respons dari server terhadap request yang dikirim oleh client.
+
 ![Gambar_5](img/response-time-2.png)
 
-Waktu server menerima adalah 4.846969
+Sehingga waktu menerima yang dibutuhkan oleh server adalah 4.846969 detik
   
 e. Waktu tranfer dan response dari client ke server
 
-Waktu tersebut dapat dihitung dari client pertama mengirim dan diterima oleh server, sehingga
+Waktu tersebut dapat dihitung dari selisih client pertama mengirim dan diterima oleh server,
+
 4.846969 – 0.911310 = 3.935659
+
+Sehingga, waktu yang dibutuhkan untuk transfer dan response dari client ke server adalah 3.935659 detik
