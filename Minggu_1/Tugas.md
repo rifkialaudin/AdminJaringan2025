@@ -1,11 +1,12 @@
 1.	Analisa File http.cap
-    a.	Versi HTTP :
-    ![Gambar_1](https://raw.githubusercontent.com/rifikialaudin/AdminJaringan2025/main/Minggu_1/img/image.png)
-    Dapat dilihat di baris HTTP request yang mana menunjukkan versi HTTP/1.1
-    b.	IP address Client dan Server
-     
-    •	IP address client : 145.254.160.237
+    a.	Versi HTTP :<br>
+    ![Gambar_1](/Minggu_1/img/image.png)<br>
+  	Dapat dilihat di baris HTTP request yang mana menunjukkan versi HTTP/1.1<br>
+   
+    b.	IP address Client dan Server<br>
+    •	IP address client : 145.254.160.237<br>
     •	IP address server : 65.208.228.223
+  	
     c.	Waktu client mengirimkan HTTP request
      
     Waktu client mengirimkan adalah 0.911310
