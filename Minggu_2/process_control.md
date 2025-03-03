@@ -1,95 +1,64 @@
-# Chapter 4: Process Control
+<h1 align=center>
+    Chapter 4: Process Control
+</h1>
 
-![Process Control](https://www.sifars.com/blog/wp-content/uploads/2019/10/Procs-1024x577-1.png)
+terdiri dari dua bagian utama:
 
-## Components of a Process
+- **Address Space**: Sekumpulan halaman memori yang digunakan untuk menyimpan kode, data, dan stack dari proses.
+- **Kernel Data Structures**: Struktur data dalam kernel yang menyimpan informasi tentang status proses, prioritas, sumber daya yang digunakan, dan lainnya
 
-A process consists of an address space and a set of data structures within the kernel. The address space is a set of memory pages that the kernel has marked for the process's use. (Pages are the units in which memory is managed. They are usually 4KiB or 8KiB in size.) These pages are used to hold the process's code, data, and stack. The data structures within the kernel keep track of the state of the process, its priority, its scheduling parameters, and so on.
+## Komponen dalam Proses
 
-Think of a process as a container for a set of resources that the kernel manages on behalf of the running program. These resources include the memory pages that hold the program's code and data, the file descriptors that refer to open files, and the various attributes that describe the state of the process.
+- **Thread**: bagian dari proses yang berbagi ruang alamat dan sumber daya yang sama. Contohnya, server web dapat memiliki banyak thread untuk menangani banyak permintaan secara bersamaan.
+- **PID (Process ID)**: ID unik untuk setiap proses yang digunakan dalam berbagai sistem operasi.
+- **PPID (Parent Process ID)**: ID dari proses induk yang membuat proses baru.
+- **UID (User ID) & EUID (Effective User ID)**: UID menunjukkan siapa pemilik proses, sedangkan EUID menentukan hak akses proses terhadap sumber daya sistem.
 
-The kernel's internal data structures record various pieces of information about each process:
+## Siklus Hidup Proses 
 
-- The process's address space map
-- The current status of the process (running, sleeping, and so on)
-- The process's priority
-- Information about the resources the process has used (CPU, memory, and so on)
-- Information about the files and network ports the process has opened
-- The process's signal mask (the set of signals that are currently blocked)
-- The owner of the process (the user ID of the user who started the process)
+Proses baru dibuat menggunakan sistem call fork(), yang membuat salinan dari proses induknya. Dalam sistem Linux modern, fork() dipanggil melalui clone(), yang mendukung fitur tambahan seperti thread.
 
-A "thread" is an execution context within a process. A process can have multiple threads, all of which share the same address space and other resources. Threads are used to achieve parallelism within a process. Threads are also known as lightweight processes because they are much cheaper to create and destroy than processes.
+Proses pertama yang dibuat oleh kernel saat sistem menyala adalah init atau systemd (PID 1), yang bertanggung jawab untuk menjalankan skrip startup dan mengelola proses lainnya.
 
-As an example to understand the concept of process and thread, consider a web server. The web server listens for incoming connections and then creates a new thread to handle each incoming request. Each thread handles one request at a time, but the web server as a whole can handle many requests simultaneously because it has many threads. Here, the web server is a process, and each thread is a separate execution context within the process.
+### Sinyal
 
-### The PID: process ID number
-
-Each process is identified by a unique process ID number, or PID. The PID is an integer that the kernel assigns to each process when the process is created. The PID is used to refer to the process in various system calls, for example, to send a signal to the process.
-
-The concept of process "namespaces" allows different processes to have the same PID. Namespaces are used to create containers, which are isolated environments that have their own view of the system. Containers are used to run multiple instances of an application on the same system, each in its own isolated environment.
-
-### The PPID: parent process ID number
-
-Each process is also associated with a parent process, which is the process that created it. The parent process ID number, or PPID, is the PID of the process's parent. The PPID is used to refer to the parent process in various system calls, for example, to send a signal to the parent process.
-
-### The UID and EUID: user ID and effective user ID
-
-The user ID, or UID, is the user ID of the user who started the process. The effective user ID, or EUID, is the user ID that the process uses to determine what resources the process can access. The EUID is used to control access to files, network ports, and other resources.
-
-
-## Lifecycle of a Process
-
-To create a new process, a process copies itself with the **fork** system call. **fork** creates a copy of the original process, and that copy is largely identical to the parent. The new process has a distinct **PID** and has its own accounting information. (Technically, Linux system use **clone**, a superset of **fork** that handles threads and includes additional features. **fork** remains in the kernel for backward compatibility but calls **clone** internally.)
-
-When the system boots, the kernel autonomously creates and installs several processes. The most notable of these is **init** or **systemd**, which is always process number 1. This process executes the system's startup scripts, althought the exact manner in which this is done differs slightly between UNIX and Linux. All processes other than the ones the kernel creates are descendants of this primordial process.
-
-### Signals
-
-Signals are a way to send notifications to a process. They are used to notify a process that a particular event has occurred. 
-
-About thirty different kinds are defined, and they’re used in a variety of ways:
-
-- They can be sent among processes as a means of communication.
-- They can be sent by the terminal driver to kill, interrupt, or suspend processes when keys such as <Control-C> and <Control-Z> are pressed.
-- They can be sent by an administrator (with kill) to achieve various ends.
-- They can be sent by the kernel when a process commits an infraction such as division by zero.
-- They can be sent by the kernel to notify a process of an “interesting” condition such as the death of a child process or the availability of data on an I/O channel.
+Digunakan untuk komunikasi antar proses, mengontrol proses (seperti menghentikan atau menjeda), dan memberi tahu proses tentang peristiwa tertentu. Ada sekitar 30 jenis signal, digunakan untuk berbagai tujuan
 
 ![Signals](https://liujunming.top/images/2018/12/71.png)
 
-The signals KILL, INT, TERM, HUP, and QUIT all sound as if they mean approximately the same thing, but their uses are actually quite different.
+Beberapa sinyal penting:
+- KILL: Menghentikan proses secara paksa.
+- INT: Dikirim saat pengguna menekan <Control-C> untuk menginterupsi proses.
+- TERM: Meminta proses untuk menghentikan eksekusi.
+- HUP: Sering digunakan untuk meminta proses (seperti daemon) untuk restart.
+- QUIT: Mirip dengan TERM, tetapi menghasilkan core dump jika tidak ditangkap.
 
-- **KILL** is unblockable and terminates a process at the kernel level. A process can never actually receive or handle this signal.
-- **INT** is sent by the terminal driver when the user types <Control-C>. It’s a request to terminate the current operation. Simple program should quit (if they catch the signal) or simply allow themselves to be killed, which is the default if the signal is not caught. Programs that have interactive command lines (such as shells) should stop what they're doing, clean up, and wait for user input again.
-- **TERM** is a request to terminate execution completely. It's expected that the receiving process will clean up its state and exit.
-- **HUP** is sent to a process when the controlling terminal is closed. Originally used to indicate a "hang up" of a phone connection, it is now often used to instruct a daemon process to terminate and restart, often to take into account new configurations. The exact behavior depends on the specific process receiving the HUP signal.
-- **QUIT** is similar to TERM, except that it defaults to producing a core dump if not caught. A few programs cannibalize this signal and interpret it to mean something else.
-
-### kill: send signals
-
-As its name implies, the **kill** command is most often used to terminate a process. **kill** can send any signal, but by default it sends a TERM. **kill** can be used by normal users on their own processes or by root on any process. The syntax is:
+**kill**: mengirim sinyal
+Digunakan untuk mengirim sinyal ke proses berdasarkan PID (Process ID).
 
 ```bash
 kill [-signal] pid
 ```
-
-where *signal* is the number or symbolic name of the signal to be sent and *pid* is the process identication number of the target process.
-
-A **kill** without a signal number does not guarantee that the process will die, because the TERM signal can be caught, blocked, or ignored. The command **kill -9 pid** is guaranteed to kill the process because the KILL signal cannot be caught, blocked, or ignored.
-
-**killall** kills processes by name rather than by process ID. It is not available on all systems.
-Example:
-
+Contoh:
 ```bash
-killall firefox
+kill 1234  # Mengirim sinyal TERM (default) ke proses dengan PID 1234
+kill -9 5678  # Mengirim sinyal KILL ke proses dengan PID 5678 (tidak bisa dicegah)
+```
+Penjelasan:
+- kill 1234 → Mengirim sinyal TERM ke proses dengan PID 1234, meminta proses untuk berhenti dengan cara yang bersih. Namun, proses bisa menangkap dan mengabaikannya.
+- kill -9 5678 → Mengirim sinyal KILL ke proses dengan PID 5678. Sinyal ini tidak bisa ditangkap atau diabaikan, sehingga proses pasti akan dihentikan secara paksa.
+
+**killall**: Menghentikan semua proses yang memiliki nama yang sama.
+
+Contoh:
+```bash
+killall firefox  # Menghentikan semua proses dengan nama "firefox"
 ```
 
-The **pkill** command is similar to **killall** but provides more options.
-
-Example:
+**pkill**: Mirip dengan killall, tetapi lebih fleksibel karena mendukung pemfilteran berdasarkan pola atau pengguna.
 
 ```bash
-pkill -u abdoufermat # kill all processes owned by user abdoufermat
+pkill -u abdoufermat  # Menghentikan semua proses yang dijalankan oleh user 'abdoufermat'
 ```
 
 ## PS: Monitoring Processes
