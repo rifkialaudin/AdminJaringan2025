@@ -61,147 +61,103 @@ killall firefox  # Menghentikan semua proses dengan nama "firefox"
 pkill -u abdoufermat  # Menghentikan semua proses yang dijalankan oleh user 'abdoufermat'
 ```
 
-## PS: Monitoring Processes
+## Memantau Monitoring dengan PS
 
-The **ps** command is the system administrator’s main tool for monitoring processes. Although versions of **ps** differ in their arguments and display, they all deliver essentially the same information.
-
-**ps** can show the PID, UID, priority, and control terminal of processes. It also informs you how much memory a process is using, how much CPU time it has consumed, and what its current status is (running, stopped, sleeping, and so on).
-
-You can obtain a useful overview of the system by running **ps aux**. The **a** option tells **ps** to show the processes of all users, and the **u** option tells it to provide detailed information about each process. The **x** option tells **ps** to show processes that are not associated with a terminal.
+Perintah **ps** digunakan untuk memantau proses. Opsi aux memberikan informasi detail tentang semua proses.
 
 ```bash
-$ ps aux | head -8
-USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root         1  0.0  0.0  22556  2584 ?        Ss   2019   0:02 /sbin/init
-root         2  0.0  0.0      0     0 ?        S    2019   0:00 [kthreadd]
-root         3  0.0  0.0      0     0 ?        I<   2019   0:00 [rcu_gp]
-root         4  0.0  0.0      0     0 ?        I<   2019   0:00 [rcu_par_gp]
-root         6  0.0  0.0      0     0 ?        I<   2019   0:00 [kworker/0:0H-kblockd]
-root         8  0.0  0.0      0     0 ?        I<   2019   0:00 [mm_percpu_wq]
-root         9  0.0  0.0      0     0 ?        S    2019   0:00 [ksoftirqd/0]
+ps aux | grep firefox  # Mencari proses Firefox
+pgrep firefox  # Menampilkan PID proses Firefox
+pidof /usr/bin/firefox  # Menampilkan PID berdasarkan path executable
 ```
 
-![process-explanation](./data/process-explanation.png)
+**ps lax** menampilkan informasi teknis tentang proses yang sedang berjalan di sistem. Mode **lax** lebih cepat dibandingkan **aux** karena tidak perlu menyelesaikan nama pengguna dan grup.  
 
-ANother useful set of arguments is **lax**, which gives more technical informations about the processes. **lax** is slightly faster than **aux** because it doesn't need to resolve user and group names.
-
-```bash
-$ ps lax | head -8
-F   UID   PID  PPID PRI  NI    VSZ   RSS WCHAN  STAT TTY        TIME COMMAND
-4     0     1     0  20   0  22556  2584 -      Ss   ?          0:02 /sbin/init
-1     0     2     0  20   0      0     0 -      S    ?          0:00 [kthreadd]
-1     0     3     2  20   0      0     0 -      I<   ?          0:00 [rcu_gp]
-1     0     4     2  20   0      0     0 -      I<   ?          0:00 [rcu_par_gp]
-1     0     6     2  20   0      0     0 -      I<   ?          0:00 [kworker/0:0H-kblockd]
-1     0     8     2  20   0      0     0 -      I<   ?          0:00 [mm_percpu_wq]
-1     0     9     2  20   0      0     0 -      S    ?          0:00 [ksoftirqd/0]
-```
-
-To look for a specific process, you can use **grep** to filter the output of **ps**.
+Untuk mencari proses tertentu, bisa menggunakan **grep** pada output dari **ps aux**, misalnya untuk mencari proses **firefox**:  
 
 ```bash
 $ ps aux | grep -v grep | grep firefox
 ```
 
-We can determine the PID of a process by using **pgrep**.
+Untuk mengetahui **PID** dari suatu proses, dapat digunakan perintah **pgrep** atau **pidof**:  
 
 ```bash
 $ pgrep firefox
-```
-
-or **pidof**.
-
-```bash
 $ pidof /usr/bin/firefox
-```
+```  
 
-## Interactive monitoring with top
+## Pemantauan Interaktif menggunakan Interactive monitoring with top
 
-The **top** command provides a dynamic real-time view of a running system. It can display system summary information as well as a list of processes or threads currently being managed by the Linux kernel. The types of system summary information shown and the types, order, and size of information displayed for processes are all user configurable and that configuration can be made persistent across restarts.
+Perintah **top** digunakan untuk melihat proses yang sedang berjalan di sistem Linux secara real-time. Perintah ini menampilkan informasi seperti penggunaan CPU, memori, dan daftar proses yang aktif. Tampilan **top** diperbarui otomatis setiap 1-2 detik.  
 
-By default, the display update every 1-2 seconds, depending on the system.
+Selain itu, ada **htop**, yang fungsinya mirip dengan **top**, tetapi lebih mudah digunakan karena memiliki tampilan yang lebih interaktif. Dengan **htop**, pengguna bisa menggulir ke atas, bawah, kiri, dan kanan untuk melihat semua proses serta perintah lengkapnya.
 
-There's also a **htop** command, which is an interactive process viewer for Unix systems. It is a text-mode application (for console or X terminals) and requires ncurses. It is similar to top, but allows you to scroll vertically and horizontally, so you can see all the processes running on the system, along with their full command lines. **htop** also has a better user interface and more options for operations.
+## Nice and renice: Mengubah Prioritas Proses
 
-## Nice and renice: changing process priority
+Niceness adalah angka yang digunakan oleh kernel untuk menentukan prioritas suatu proses dibandingkan dengan proses lain yang bersaing untuk CPU.
 
-The **niceness** is a numeric hint to the kernel about how the process should be treated in relation to other processes contending for the CPU.
+Nilai niceness tinggi (+19) = Prioritas rendah (proses kurang penting).
+Nilai niceness rendah (-20) = Prioritas tinggi (proses lebih penting).
+Di Linux, rentang nilai niceness adalah -20 hingga +19.
 
-A high niceness means a low priority for your process: you are going to be nice. A low or negative value means high priority: you are not very nice!
-
-The range of allowable niceness values varies among systems. In Linux the range is -20 to +19, and in FreeBSD it's -20 to +20.
-
-A low priority process is one that is not very important. It will get less CPU time than a high priority process. A high priority process is one that is important and should be given more CPU time than a low priority process.
-
-For example, if you are running a CPU-intensive job that you want to run in the background, you can start it with a high niceness value. This will allow other processes to run without being slowed down by your job.
-
-The **nice** command is used to start a process with a given niceness value. The syntax is:
-
+**nice** → Menjalankan proses dengan prioritas tertentu
 ```bash
-nice -n nice_val [command]
-
-# Example
-nice -n 10 sh infinite.sh &
+nice -n 10 sleep 10 &
 ```
 
-The **renice** command is used to change the niceness value of a running process. The syntax is:
-
+**renice** → Mengubah prioritas proses yang sedang berjalan.
 ```bash
-renice -n nice_val -p pid
-
-# Example
-renice -n 10 -p 1234
+renice -n -5 -p 215
 ```
 
-**The priority value** is the process’s actual priority which is used by the Linux kernel to schedule a task.
-In Linux system priorities are 0 to 139 in which 0 to 99 for real-time and 100 to 139 for users.
+Hubungan antara niceness dan priority:
+priority_value = 20 + nice_value
 
-The relation between nice value and priority is as follows:
-
-> priority_value = 20 + nice_value
-
-The default nice value is 0. The lower the nice value, the higher the priority of the process.
+Secara default, nice value adalah 0. Semakin kecil angkanya, semakin tinggi prioritas proses tersebut.
 
 ## The /proc filesystem
 
-The Linux versions of **ps** and **top** read their process status information from the **/proc** directory, a pseudo-filesystem in which the kernel exposes a variety of interesting information about the system's state.
+perintah **ps** dan **top** mendapatkan informasi status proses dari direktori /proc. Direktori ini merupakan pseudo-filesystem yang digunakan oleh kernel untuk menyajikan berbagai informasi tentang keadaan sistem.
 
-Despite the name, **/proc** contains other information than just processes (stats generated by the system, etc).
+tidak hanya berisi informasi tentang proses yang berjalan, tetapi juga berbagai statistik sistem.
 
-Processes are represented by directories in **/proc**, and each process has a directory named after its PID. The **/proc** directory contains a variety of files that provide information about the process, such as the command line, environment variables, file descriptors, and so on.
+### Struktur Direktori /proc
+Setiap proses yang berjalan memiliki direktori di /proc yang dinamai sesuai dengan PID (Process ID) dari proses tersebut. Di dalam direktori ini, terdapat berbagai file yang menyimpan informasi tentang proses tersebut, seperti:
+- cmdline → Menyimpan perintah yang digunakan untuk menjalankan proses.
+- environ → Berisi variabel lingkungan dari proses.
+- fd/ → Menyimpan daftar file descriptor yang digunakan oleh proses.
 
-![process-information](./data/process-information.png)
+Direktori /proc sangat berguna untuk memantau dan menganalisis proses serta performa sistem secara langsung dari kernel.
 
 ## Strace and truss
 
-To figure out what a process is doing, you can use **strace** on Linux or **truss** on FreeBSD. These commands trace system calls and signals. They can be used to debug a program or to understand what a program is doing.
+Untuk mengetahui apa yang dilakukan sebuah proses, kita dapat menggunakan perintah strace di Linux atau truss di FreeBSD. Perintah ini digunakan untuk melacak system calls dan sinyal yang dilakukan oleh suatu proses.
 
-For example, the following log was produced by strace run against an active copy of top (which was running as PID 5810):
+### Fungsi Strace dan Truss
+- Debugging → Membantu menemukan kesalahan dalam program.
+- Analisis Perilaku Program → Memahami bagaimana suatu program berinteraksi dengan sistem.
 
+### Contoh:
+Dengan menjalankan,
 ```bash
-$ strace -p 5810
-
-gettimeofday({1197646605,  123456}, {300, 0}) = 0
-open("/proc", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 7
-fstat64(7, {st_mode=S_IFDIR|0555, st_size=0, ...}) = 0
-fcntl64(7, F_SETFD, FD_CLOEXEC)          = 0
-getdents64(7, /* 3 entries */, 32768)   = 72
-getdents64(7, /* 0 entries */, 32768)   = 0
-stat64("/proc/1", {st_mode=S_IFDIR|0555, st_size=0, ...}) = 0
-open("/proc/1/stat", O_RDONLY)           = 8
-read(8, "1 (init) S 0 1 1 0 -1 4202752"..., 1023) = 168
-close(8)                                = 0
-
-[...]
+strace -p [PID]
 ```
+kita bisa melihat aktivitas sistem dari proses yang sedang berjalan. Misalnya, ketika menjalankan strace terhadap proses top, hasil yang diperoleh menunjukkan bahwa:
 
-**top** starts by checking the current time. It then opens and stats the **/proc** directory, and reads the **/proc/1/stat** file to get information about the **init** process.
+1. top memeriksa waktu saat ini.
+2. Membuka dan membaca isi direktori /proc.
+3. Mengakses file /proc/1/stat untuk mendapatkan informasi tentang proses init.
 
-## Runaway processes
+Dengan strace atau truss, kita bisa melihat bagaimana suatu program bekerja dan berinteraksi dengan sistem secara lebih mendetail.
 
-Occasionally a process will stop responding to the system and run wild. These processes ignore their scheduling priority and insist on taking up 100% of the CPU. Because other processes can only get limited access to the CPU, the machine begins to run very slowly. This is called a runaway process.
+## Proses Runaway
 
-The **kill** command can be used to terminate a runaway process. If the process is not responding to a TERM signal, you can use the KILL signal to terminate it.
+Terkadang, sebuah proses bisa berhenti merespons dan terus berjalan tanpa terkendali. Proses ini disebut runaway process dan dapat menyebabkan CPU bekerja 100%, sehingga sistem menjadi lambat.
+
+Untuk menghentikan proses yang tidak merespons, kita dapat menggunakan perintah kill dengan sinyal yang sesuai:
+
+SIGTERM (15) → Sinyal standar untuk meminta proses berhenti dengan baik.
+SIGKILL (9) → Digunakan jika proses tidak merespons SIGTERM.
 
 ```bash
 kill -9 pid
@@ -210,134 +166,118 @@ or
 
 kill -KILL pid
 ```
+### Menganalisis Penyebab Proses Runaway
+1. Menggunakan strace atau truss → Untuk melihat sistem panggilan (syscalls) yang dilakukan oleh proses dan memahami mengapa proses tersebut berjalan tanpa henti.
 
-We can investigate the cause of the runaway process by using **strace** or **truss**. Runaway processes that produce output can fill up an entire filesystem. 
+2. Memeriksa Penggunaan Filesystem
+- Jalankan df -h untuk mengecek apakah sistem penyimpanan penuh.
+- Jika penuh, gunakan du untuk menemukan file atau direktori terbesar.
 
-You can run a **df -h** to check the filesystem usage. If the filesystem is full, you can use the **du** command to find the largest files and directories.
+3. Melihat File yang Dibuka oleh Proses
+- Jalankan lsof -p PID untuk mengetahui file mana yang sedang digunakan oleh proses runaway.
 
+Dengan teknik ini, kita bisa menghentikan dan menganalisis penyebab runaway process, serta mencegah dampak buruk terhadap sistem.
 
-You can also use the **lsof** command to find out which files are open by the runaway process.
+## Proses Berkala
 
-```bash
-lsof -p pid
-```
+### cron: Menjadwalkan Perintah
 
-## Periodic processes
+cron adalah daemon yang digunakan untuk menjalankan perintah secara terjadwal. Program ini mulai berjalan saat sistem dinyalakan dan terus berjalan selama sistem aktif.
 
-### cron: schedule command
+### Cara Kerja cron
+1. Membaca File Konfigurasi
+- cron membaca daftar perintah dan waktu eksekusi yang sudah ditentukan dalam file konfigurasi.
+- Perintah yang dijalankan oleh cron dieksekusi menggunakan sh, sehingga semua perintah yang bisa dilakukan di terminal juga bisa dijalankan melalui cron.
+2. File Konfigurasi (Crontab)
+- Crontab adalah file tempat menyimpan daftar tugas yang akan dijalankan oleh cron.
+- Lokasi penyimpanan crontab berbeda tergantung pada sistem operasi:
+  - Linux: /var/spool/cron
+  - FreeBSD: /var/cron/tabs
 
-The cron (crond on RedHat: yeah weirddos!!) daemon is the traditional tool for running commands on a predtermined schedule. It starts when the system boots and runs as long as the system is up.
+Dengan menggunakan cron, kita bisa mengotomatisasi berbagai tugas seperti backup data, pembaruan sistem, atau menjalankan skrip tertentu pada waktu yang ditentukan.
 
-**cron** reads configuration files containing lists of command lines and times at which they are to be invoked. The command lines are executed by **sh**, so almost anything you can do by hand from the shell can also be done with **cron**.
+### Format Crontab
 
-A cron configuration file is called a “crontab,” short for “cron table.” Crontabs for individual users are stored under **/var/spool/cron** (Linux) or **/var/cron/tabs** (FreeBSD).
-
-### format of crontab
-
-A crontab file has five fields for specifying day, date and time followed by the command to be run at that interval.
-
-```bash
-*     *     *     *     *  command to be executed
--     -     -     -     -
-|     |     |     |     |
-|     |     |     |     +----- day of week (0 - 6) (Sunday=0)
-|     |     |     +------- month (1 - 12)
-|     |     +--------- day of month (1 - 31)
-|     +----------- hour (0 - 23)
-+------------- min (0 - 59)
-```
-
-Some examples:
-
-```bash
-# Run a command at 2:30am every day
-30 2 * * * command
-
-# Run a command at 10:30pm on the 1st of every month
-30 22 1 * * command
-
-# Run a Python script every 1st of the month at 2:30am
-30 2 1 * * /usr/bin/python3 /path/to/script.py
-```
-
-The following  schedule: 0,30 * 13 * 5 means that the command will be executed at 0 and 30 minutes past the 13th hour on Friday. If you want to run a command every 30 minutes, you can use the following schedule: */30 * * * *. 
+Crontab adalah file konfigurasi yang digunakan oleh cron untuk menjadwalkan eksekusi perintah secara otomatis pada waktu tertentu. Format crontab terdiri dari lima kolom utama yang menentukan waktu eksekusi, diikuti dengan perintah yang akan dijalankan.
 
 **crontab management**
 
-The **crontab** command is used to create, modify, and delete crontabs. The **-e** option is used to edit the crontab file, the **-l** option is used to list the crontab file, and the **-r** option is used to remove the crontab file.
+Crontab dikelola menggunakan perintah crontab, yang memungkinkan pengguna untuk membuat, mengedit, menampilkan, dan menghapus jadwal tugas.
 
-### Systemd timer
-
-A systemd timer is a unit configuration file whose name ends in **.timer**. systemd timers can be used as an alternative to cron jobs. They are more flexible and more powerful than cron jobs.
-
-A timer unit is activated by a corresponding service unit. The service unit is triggered by the timer unit at the time specified in the timer unit. The timer unit can also be activated by the system boot or by an event.
-
-The **systemctl** command is used to manage systemd units. The **list-timers** option is used to list the active timers.
-
+- Mengedit crontab
 ```bash
-$ systemctl list-timers
-
-NEXT                         LEFT          LAST                         PASSED       UNIT                         ACTIVATES
-Fri 2021-10-15 00:00:00 UTC  1h 1min left Thu 2021-10-14 00:00:00 UTC  22h ago      logrotate.timer              logrotate.service
-
-1 timers listed.
+crontab -e
 ```
+Membuka editor untuk mengedit file crontab pengguna.
 
-In the example above, the **logrotate.timer** unit is scheduled to activate the **logrotate.service** unit at midnight every day.
+- Menampilkan crontab yang sedang aktif
+```bash
+crontab -l
+```
+Menampilkan daftar tugas yang telah dijadwalkan.
 
-Here's what the **logrotate.timer** unit looks like:
+- Menghapus crontab pengguna
+```bash
+crontab -r
+```
+Menghapus semua jadwal yang tersimpan di crontab.
+
+### Systemd Timer
+
+Systemd Timer adalah unit konfigurasi dalam systemd yang digunakan untuk menjadwalkan eksekusi tugas secara otomatis. File konfigurasi untuk timer ini memiliki ekstensi .timer dan dapat digunakan sebagai alternatif cron jobs, dengan fitur yang lebih fleksibel dan lebih kuat.
+
+### Cara Kerja Systemd Timer
+
+Systemd timer bekerja dengan memicu service unit pada waktu tertentu yang telah ditentukan dalam file konfigurasi timer. Timer ini dapat dijalankan berdasarkan:
+- Jadwal waktu tertentu
+- Saat sistem melakukan booting
+- Ketika terjadi suatu event dalam sistem
+
+Untuk melihat daftar timer yang sedang aktif, gunakan perintah berikut:
 
 ```bash
-$ cat /usr/lib/systemd/system/logrotate.timer
+systemctl list-timers
+```
+Perintah ini akan menampilkan daftar timer yang telah dikonfigurasi dalam sistem.
 
-[Unit]
-Description=Daily rotation of log files
-Documentation=man:logrotate(8) man:logrotate.conf(5)
+### Contoh Penggunaan Systemd Timer
 
+1. Mengirim Email Secara Otomatis
+Systemd timer atau cron dapat digunakan untuk mengirim email secara otomatis, misalnya untuk mengirim laporan bulanan kepada admin setiap tanggal 20 pukul 05:30 pagi.
+```bash
+30 5 20 * * /usr/bin/mail -s "Laporan Bulanan" admin@example.com < /path/to/report.txt
+```
+Dengan perintah ini, email akan dikirim secara otomatis setiap bulan pada tanggal 25 pukul 04:30 pagi.
+
+2. Membersihkan File Sampah (Cleanup Filesystem)
+ 
+Untuk menghemat ruang penyimpanan, sistem dapat secara otomatis menghapus file sampah yang sudah lebih dari 30 hari di direktori Trash setiap tengah malam.
+```bash
+0 0 * * * /usr/bin/find /home/user/.local/share/Trash/files -mtime +30 -exec /bin/rm -f {} \;
+```
+Dengan script ini, file yang lebih dari 30 hari dalam folder Trash akan dihapus secara otomatis.
+
+3. Rotasi File Log (Log Rotation)
+
+Rotasi log adalah proses membagi file log menjadi segmen berdasarkan ukuran atau tanggal, serta menyimpan beberapa versi lama untuk referensi. Hal ini membantu menghindari akumulasi file log yang terlalu besar.
+
+Systemd timer dapat digunakan untuk memutar log secara otomatis setiap hari dengan konfigurasi seperti:
+```bash
 [Timer]
 OnCalendar=daily
-AccuracySec=1h
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-
 ```
+Dengan pengaturan ini, sistem akan memastikan bahwa file log tidak tumbuh tanpa batas dan tetap terkelola dengan baik.
 
-The **OnCalendar** option is used to specify when the timer should activate the service. The **AccuracySec** option is used to specify the accuracy of the timer. The **Persistent** option is used to specify whether the timer should catch up on missed runs.
+4. Menjalankan Batch Job Secara Otomatis
 
+Beberapa tugas seperti memproses antrian pesan atau memindahkan data antar sistem lebih baik dijalankan sebagai batch job. Misalnya, pesan yang menumpuk dalam antrian dapat diproses sekaligus menggunakan tugas terjadwal sebagai bagian dari proses ETL (Extract, Transform, Load).
 
-### Common use for scheduled tasks
+5. Backup dan Mirroring Secara Berkala
 
-**Sending mail**
+Backup adalah proses menyimpan salinan data ke sistem lain untuk keamanan, sedangkan mirroring adalah metode menduplikasi file sistem secara otomatis ke server lain.
 
-You can automatically email the output of a daily report or the results of a command execution using **cron** or **systemd** timers.
-
-For example:
-    
+Dengan menggunakan rsync, kita bisa menjadwalkan sinkronisasi file untuk menjaga mirror tetap up-to-date:
 ```bash
-30 4 25 * * /usr/bin/mail -s "Monthly report"
-    abdou@admin.com%Receive the monthly report for the month of July!%%Sincerely,%cron%
+0 2 * * * rsync -avz /data/ user@backupserver:/backup/
 ```
-
-**Cleaning up a filesystem**
-
-You can use **cron** or **systemd** timers to run a script that cleans up a filesystem. For example, you can use a script to purge the contents of trash directory every day at midnight.
-
-```bash
-0 0 * * * /usr/bin/find /home/abdou/.local/share/Trash/files -mtime +30 -exec /bin/rm -f {} \;
-```
-
-**Rotating a log file**
-
-To rotate a log file means to divide it into segments by size or by date, keeping several older versions of the log available at all times. Since log rotation is a recurrent and regularly occurring event, it’s an ideal task to be scheduled.
-
-**Running batch jobs**
-
-Some long-running calculations are best run as batch jobs. For example, messages can accumulate in a queue or database. You can use a cron job to process all the queued messages at onces as an ETL (Extract, Transform, Load) to another location, such as a data warehouse.
-
-**Backing up and mirroring**
-
-You can use a scheduled task to automatically back up a directory to a remote system.
-Mirrors are byte-for-byte copies of a filesystem or directories that are hosted on another system. They can be used as a form of backup or as a way to distribute files across multiple systems. 
-You can use a periodic execution of **rsync** to keep the mirror up to date.
+Perintah ini akan menjalankan backup setiap hari pukul 02:00 pagi ke server lain.
