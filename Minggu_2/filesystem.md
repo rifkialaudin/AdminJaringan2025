@@ -1,93 +1,94 @@
-# Chapter 5: The Filesystem
+<h1 align=center>
+  Chapter 5: Filesystem
+</h1>
 
-![filesystem-icon](https://miro.medium.com/v2/resize:fit:752/1*quw0WvsLLCxad3WC6fjQ1Q.png)
+![filesystem-icon](https://miro.medium.com/v2/resize:fit:752/1*quw0WvsLLCxad3WC6fjQ1Q.png)  
 
-The basic purpose of a filesystem is to represent and organize the system's storage resources.
+Filesystem adalah sistem yang digunakan untuk merepresentasikan dan mengorganisir sumber daya penyimpanan dalam sebuah sistem.  
 
-The filesystem can be thought of as a a comprising four main components:
+Filesystem memiliki **empat komponen utama**, yaitu:  
+1. **Namespace** – Menyediakan cara untuk memberi nama dan mengorganisir data dalam bentuk hierarki.  
+2. **API** – Kumpulan sistem panggilan (system calls) yang digunakan untuk menavigasi dan memanipulasi data.  
+3. **Model Keamanan** – Mekanisme untuk melindungi, menyembunyikan, dan membagikan data sesuai dengan aturan tertentu.  
+4. **Implementasi** – Perangkat lunak yang menghubungkan model logis filesystem dengan perangkat keras.  
 
-1. A namespace - a way to name things and organize them in a hierarchy
-2. An API - a set of system calls for navigating and manipulating objects
-3. Security models - schemes for protecting, hiding, and sharing things
-4. An implementation - software to tie the logical model to the hardware
+Filesystem yang paling umum digunakan untuk penyimpanan berbasis disk meliputi **ext4, XFS, dan UFS**, serta **ZFS dan Btrfs** dari Oracle. Selain itu, ada juga filesystem lainnya seperti **VxFS dari Veritas dan JFS dari IBM**.  
 
-The predominant disk-based filesystem are ext4, XFS, and UFS filesystems, along with Oracle's ZFS and Btrfs. Many others are available, including, Verittas's VxFS and JFS from IBM.
+Selain filesystem utama, ada **filesystem asing** seperti **FAT dan NTFS** yang digunakan oleh Windows, serta **ISO 9660** yang digunakan untuk CD dan DVD.  
 
-Also we've some foreign filesystems like FAT and NTFS used by Windows and the ISO 9660 filesystem used by CDs and DVDs.
-
-Most modern filesystems either try to implement the traditional filesystem functionality in a faster and more reliable manner, or they add extra features as a layer on top of the standard filesystem semantics.
+Filesystem modern umumnya berusaha meningkatkan kecepatan dan keandalan dibandingkan filesystem tradisional, atau menambahkan fitur tambahan di atas fungsi standar filesystem.
 
 ## Pathnames
 
-The word "folder" is just linguistic leakage from the world of Windows and macOS. It means the same thing as **directory**, which is more technical by the way. DOn't use it in technical contexts unless you're prepared to receive funny looks!!
+Dalam konteks teknis, istilah "folder" sebenarnya berasal dari Windows dan macOS, tetapi maknanya sama dengan "directory". Dalam dunia teknis, lebih baik menggunakan istilah directory karena lebih umum dan tepat digunakan dalam lingkungan berbasis UNIX/Linux.
 
-The list of directories that leads to a file is called its **pathname**. The pathname is a string that describes the file's location in the filesystem hierarchy.
-Pathnames can be either **absolute** (e.g. `/home/username/file.txt`) or **relative** (e.g. `./file.txt`).
+### Pathname (Nama Jalur) dalam Filesystem
+Pathname adalah daftar direktori yang menunjukkan lokasi sebuah file dalam hierarki filesystem.
 
-## Filesystem Mounting and Unmounting
-
-The filesystem is composed of smaller chunks--also called "filesystems"--each of which consists of one directory and its subdirectories and files. We use the term **file tree** to refer the overall layout and reserve the word **filesystem** for the branches attached to the tree.
-
-In most situations, filesystems are attached to the tree with the `mount` command. The `mount` command maps a directory within the existing file tree, called the **mount point**, to the root of the new filesystem.
-
-Example:
-
+Pathname terbagi menjadi dua jenis:
+1. Absolute Pathname – Menunjukkan lokasi file atau direktori mulai dari root (/), sehingga selalu memberikan jalur yang pasti. <br>
+Contoh:
 ```bash
-# Mount the filesystem on /dev/sda4 to /users
+/home/username/file.txt
+```
+2. Relative Pathname – Menunjukkan lokasi file atau direktori relatif terhadap posisi saat ini (current directory). <br>
+Contoh:
+```bash
+./file.txt
+```
+Tanda . menunjukkan direktori saat ini, sedangkan .. digunakan untuk merujuk ke direktori induk (parent directory).
+
+## Filesystem, Mount, dan Unmount
+
+### Filesystem dan File Tree
+Filesystem terdiri dari bagian-bagian kecil yang masing-masing memiliki satu direktori utama beserta subdirektori dan file di dalamnya.
+- File tree adalah struktur keseluruhan dari filesystem.
+- Filesystem mengacu pada cabang-cabang yang melekat pada file tree.
+
+### Mount dan Unmount Filesystem
+Filesystem dapat dihubungkan ke file tree menggunakan perintah mount, dengan direktori tujuan disebut mount point.
+
+Contoh:
+```bash
 mount /dev/sda4 /users
 ```
+Perintah di atas memasang filesystem dari /dev/sda4 ke direktori /users.
 
-Linux has a lazy unmount option (**umount -l**) that removes a filesystem from the naming hierarchy but does not truly unmount it until it is no longer in use.
+Untuk melepaskan filesystem, gunakan perintah umount:
+- **umount -l** (lazy unmount) – Melepas filesystem dari hierarki nama tetapi tetap aktif sampai tidak digunakan lagi.
+- **umount -f** (forceful unmount) – Memaksa unmount meskipun filesystem sedang digunakan.
 
-**umount -f** is a forceful unmount, which is useful when the filesystem is busy.
-
-Instead of reaching for **umount -f**, you can use **lsof** or **fuser** to find out which processes are using the filesystem and then shut them down.
-
-Example:
-
+### Mengetahui Proses yang Menggunakan Filesystem
+Daripada menggunakan **umount -f**, lebih baik mencari tahu proses mana yang masih menggunakan filesystem dengan perintah berikut:
+1. Menggunakan lsof untuk melihat proses yang menggunakan filesystem:
 ```bash
-# Find out which processes are using the filesystem
-
-abdou@debian:~$ lsof /home/abdou
-
-COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF   NODE NAME
-bash     1000 abdou  cwd    DIR    8,1     4096  131073 /home/abdou
-bash     1000 abdou  rtd    DIR    8,1     4096  131073 /home/abdou
-bash     1000 abdou  txt    REG    8,1   103752  131072 /bin/bash
-bash     1000 abdou  mem    REG    8,1  1848400  131074 /lib/x86_64-linux-gnu/libc-2.28.so
-bash     1000 abdou  mem    REG    8,1   170864  131075 /lib/x86_64-linux-gnu/ld-2.28.so
-code     1234 abdou  cwd    DIR    8,1     4096  131073 /home/abdou
-msedge   5678 abdou  cwd    DIR    8,1     4096  131073 /home/abdou
+lsof /home/abdou
 ```
 
-To investigate the processes that are using the filesystem, you can use the **ps** command.
-
-Example:
-
+2. Menggunakan ps untuk mendapatkan informasi detail tentang proses tersebut:
 ```bash
-# Investigate the processes that are using the filesystem
-
-abdou@debian:~$ ps up "1234 5678 91011"
-
-USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-abdou     1234  0.0  0.0  12345  1234 ?        Ssl  00:00   0:00 code
-abdou     5678  0.0  0.0  12345  1234 ?        Ssl  00:00   0:00 msedge
-abdou     91011  0.0  0.0  12345  1234 ?        Ssl  00:00   0:00 chrome
+ps up "1234 5678 91011"
 ```
+Dengan mengetahui proses yang masih aktif, kita bisa menutupnya terlebih dahulu sebelum melakukan unmount untuk menghindari error atau potensi kehilangan data.
 
-## Organization of the file tree
+## Organisasi File Tree dalam Sistem UNIX
 
-UNIX systems have never been well organized! Various incompatible naming conventions are used simultaneously, and different types of files are scattered randomly around the namespace. **That's why it's hard to upgrade the operating system**.
+Sistem UNIX memiliki struktur file tree yang kurang terorganisir dengan baik karena adanya berbagai konvensi penamaan yang tidak konsisten. Hal ini membuat proses upgrade sistem operasi menjadi sulit.
 
-The root filesystem includes at least the root directory and a minimal set of files and subdirectories. The file that contains the OS kernel usually lives under **/boot**, but its exact name and location can vary. Under BSD and some other UNIX systems, the kernel is not really a single file so much as a set of components.
+### Struktur Root Filesystem
+Root filesystem mencakup direktori root (/) beserta beberapa file dan subdirektori penting, seperti:
+- /boot → Menyimpan file kernel OS (lokasi dan nama dapat bervariasi).
+- /etc → Berisi file konfigurasi dan sistem yang krusial.
+- /sbin dan /bin → Menyimpan utilitas penting untuk sistem.
+- /tmp → Direktori untuk menyimpan file sementara.
+- /dev → Dahulu merupakan bagian dari root filesystem, tetapi sekarang merupakan filesystem virtual yang dimount secara terpisah.
 
-**/etc** contains critical system and configuration files. **/sbin** and **/bin** for important utilities, and sometimes **/tmp** for temporary files. The **/dev** was traditionally part of the root filesystem, but these days it's a virtual filesystem that's mounted separately.
+### Struktur Direktori Tambahan
+- /lib atau /lib64 → Berisi shared library dan beberapa komponen lainnya. Pada beberapa sistem, file-file ini dipindahkan ke /usr/lib, sedangkan /lib hanya menjadi symbolic link.
+- /usr → Menyimpan sebagian besar program non-kritis untuk sistem, manual online, dan pustaka tambahan. FreeBSD juga menyimpan konfigurasi lokal di /usr/local.
+- /var → Menyimpan log sistem, informasi akuntansi, spool direktori, dan file lain yang sering berubah atau bertambah seiring waktu.
 
-Some systems keep shared library files and a few other oddments, such as the C preprocessor, in the **/lib** or **/lib64** directory. Others have moved these items into **/usr/lib**, sometimes leaving **/lib** as a symbolic link.
-
-The **/usr** and **/var** are also of great importance. **/usr** is where most notable standard-but-not-system-critical programs are kept, along with various other booty such as on-line manuals and most libraries. FreeBSD stores quite q bit of locql configuration under **/usr/local**. **/var** houses spool directories, log files, accounting information, and various other items that grow or change rapidly and that vary on each host. Both **/usr** and **/var**  must be available to enable the system to come up all the way to multiuser mode.
-
-![pathnames](./data/pathnames.png)
+Baik /usr maupun /var harus tersedia agar sistem bisa berjalan hingga mode multiuser.
 
 ## File types
 
