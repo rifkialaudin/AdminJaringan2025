@@ -94,236 +94,158 @@ Baik /usr maupun /var harus tersedia agar sistem bisa berjalan hingga mode multi
 
 Most filesystem implementations define seven types of files:
 
-1. Regular files
-2. Directories
-3. Character devices files
-4. Block devices files
-5. Local domain sockets
-6. Named pipes(FIFOs)
-7. Symbolic links
+Sistem UNIX mendefinisikan tujuh jenis file dalam filesystem:
 
-You can determine the type of a file by using the **file** command (type **man file** for more information). 
+1. Regular files → Berisi kumpulan byte tanpa struktur tertentu, termasuk file teks, data, program eksekusi, dan pustaka bersama.
+2. Directories → Referensi yang menunjuk ke file lain.
+3. Character device files → Digunakan untuk komunikasi dengan perangkat keras berbasis karakter (misalnya keyboard, terminal).
+4. Block device files → Digunakan untuk perangkat berbasis blok (misalnya hard disk, USB).
+5. Local domain sockets → Digunakan untuk komunikasi antarproses dalam satu host, mirip dengan network sockets tetapi terbatas pada sistem lokal.
+6. Named pipes (FIFO) → Seperti local domain sockets, tetapi lebih sederhana dan digunakan untuk komunikasi antarproses dalam satu sistem.
+7. Symbolic links (Soft links) → Referensi ke file lain berdasarkan nama, lebih fleksibel daripada hard link karena dapat menunjuk ke file di filesystem yang berbeda dan ke direktori.
+
+**Menentukan tipe file**
+Gunakan perintah file untuk mengetahui tipe file:
 
 ```bash
 $ file /bin/bash
-bin/bash: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=33a5554034feb2af38e8c75872058883b2988bc5, for GNU/Linux 3.2.0, stripped
 ```
+Atau gunakan ls -ld untuk menampilkan informasi direktori tanpa menampilkan isinya
 
-You can also use **ls -ld**, the **-d** flag forces **ls** to show the information for a directory rather than showing the directory's contents.
-
-![file-type-encoding](./data/file-type-encoding.png)
-
-**Regular files** consist of a series of bytes; filesystems impose no structure on their contents. Text files, data files, executable programs, and shared libraries are all stored as regular files.
-
-**Directories** are named references to other files. 
-
-**Hard links** are a way to give a single file multiple names. The **ln** command creates a new hard link to an existing file. The **-i** option to **ls** causes it to display the number of hard links to each file.
-
-Example
-
+**Hard Links**
+Hard link memungkinkan satu file memiliki beberapa nama. Hard link dibuat dengan perintah:
 ```bash
 $ ln /etc/passwd /tmp/passwd
 ```
+Gunakan ls -i untuk melihat jumlah hard link dalam suatu file.
 
-**Character and block device files** 
+**Character dan Block Device Files**
 
-Device files let programs communicate with the system's hardware and peripherals. The kernel includes (or loads) driver software for each of the system's devices. This software takes care of messy details of managing each device so that the kernel itself can remain relatively abstract and hardware-independent.
+File perangkat digunakan untuk komunikasi antara program dan perangkat keras melalui driver sistem operasi.
+- Character device files menangani data satu karakter dalam satu waktu.
+- Block device files menangani data dalam blok.
 
-The distinction between character and block devices is subtle and not worth reviewing in detail.
+Setiap perangkat memiliki major number (menunjukkan driver yang mengontrolnya) dan minor number (menunjukkan unit spesifik). Misalnya, /dev/tty0 adalah terminal pertama dengan major device number 4 dan minor device number 0.
 
-Device files are characterized by their major and minor device numbers. The major number identifies the driver that controls the device, and the minor number typically tells the driver which physical unit to address. For example, major device number 4 on a Linux system denotes the serial driver. The first serial port(**/dev/tty0**) would have major device number 4 and minor device number 0, the second serial port(**/dev/tty1**) would have major device number 4 and minor device number 1, and so on.
+**Local Domain Sockets dan Named Pipes**
 
-In the past, **/dev** was a generic directory and the devices were created with **mknod** and removed with **rm**. Unfortunately, this crude system was ill-equipped to deal with the endless sea of drivers and device types that have appeared over the last few decades. It also facilitated all sorts of potential configuration mismatches: device files that referred to no actual device, devices inaccessible because they had no device files, and so on.
+- Local domain sockets digunakan untuk komunikasi antarproses dalam satu sistem, misalnya oleh Syslog dan X Window System.
+- Named pipes (FIFO) juga digunakan untuk komunikasi antarproses dalam satu host tetapi lebih sederhana dibandingkan local domain sockets.
 
-These days, the **/dev** directory is normally mounted as a special filesystem type, and its contents are automatically maintained by the kernel in concert with user-level daemon.
+**Symbolic Links**
 
-**Local domain sockets** are a way for processes to communicate with each other. They are similar to network sockets, but they are confined to the local host.
+Symbolic link adalah referensi ke file berdasarkan nama, lebih fleksibel dibandingkan hard link karena dapat menunjuk ke file di filesystem lain atau ke direktori.
 
-Syslog and X Window System are examples of standard facilities that use local domain sockets.
-
-**Named pipes** like local domain sockets allow running processes to communicate with each other within the same host.
-
-**Symbolic links** or soft links points to a file by name. They are a way to give a file multiple names, but they are more flexible than hard links. They can point to files on different filesystems, and they can point to directories.
-
-For example, the **/usr/bin** directory is often a symbolic link to **/bin**. This is a way to keep the root filesystem small and to make it easier to share the same software among multiple hosts.
-
+Contoh symbolic link:
 ```bash
 $ ln -s /bin /usr/bin
-
 $ ls -l /usr/bin
 lrwxrwxrwx 1 root root 4 Mar  1  2020 /usr/bin -> /bin
 ```
+Symbolic link sering digunakan untuk menyederhanakan struktur direktori dan mempermudah manajemen sistem.
 
 ## File attributes
 
-Under Unix and Linux filesystem model, every file has a set of nine permission bits, which determine who can read, write, and execute the file. Together with three other bits that primarily affect the operation of executable programs, these bits constitute the file's mode.
-
-These twelve mode bits are stored along with four bits of file-type information. The four file-type bits are set when the file is created and cannot be changed, but the file's owner and superuser can modify the twelve mode bits with the **chmod** command.
+Di sistem Unix dan Linux, setiap file memiliki 12 bit mode yang menentukan izin akses (read, write, execute) untuk pemilik, grup, dan pengguna lain. Selain itu, terdapat 4 bit tambahan untuk menentukan jenis file. Izin ini dapat dimodifikasi menggunakan perintah chmod oleh pemilik file atau superuser.
 
 ![file-attributes](https://cdn.storyasset.link/nlFtWFR5rySdmletT0jhDUQ0tXl2/ms-yxhcfoletf.jpg)
 
-### Permission bits
+### 1. Permission Bits (Bit Izin)
+Izin file dibagi menjadi tiga kelompok:
+- u (owner/pemilik) → Pemilik file-
+- g (group/grup) → Grup yang memiliki file
+- o (others/lainnya) → Pengguna lain
 
-The permission bits are divided into three groups of three bits each. The first group of three bits is for the file's owner, the second group is for the file's group, and the third group is for everyone else.
+Masing-masing memiliki tiga izin:
+- r (read) → Bisa membaca file-
+- w (write) → Bisa mengedit atau menghapus isi file
+- x (execute) → Bisa mengeksekusi file jika berbentuk program
 
-You can use the name H**ugo** to remember the order of the groups: **u** for the owner, **g** for the group, and **o** for others. 
+Izin ini juga bisa dinyatakan dalam format oktal:
+- 4 (r) → Read
+- 2 (w) → Write
+- 1 (x) → Execute
 
-It's also possible to use the octal notation (base 8) because each digit in the octal notation represents three bits. The topmost three bits (with octal values of 400, 200, and 100) represent the file's owner, the middle three bits (with octal values of 40, 20, and 10) represent the file's group, and the bottom three bits (with octal values of 4, 2, and 1) represent everyone else.
+### 2. Setuid dan Setgid
+- Setuid (4000) → Jika diaktifkan pada file eksekusi, file tersebut akan berjalan dengan hak akses pemiliknya.
+- Setgid (2000) → Jika diaktifkan pada file eksekusi, file tersebut akan berjalan dengan hak akses grupnya.
+Jika diterapkan pada direktori, Setgid memastikan semua file yang dibuat di dalamnya mewarisi grup dari direktori.
 
-On a regular file, the read bit allows the file to be read, the write bit allows the file to be modified or truncated; however, the ability to delete or rename (or delete and then re-create!) the file is controlled by the permissions on its parent directory, where the name-to-dataspace mapping is maintained.
+### 3. Sticky Bit (1000)
+- Diterapkan pada direktori untuk mencegah pengguna lain menghapus atau mengganti nama file yang bukan miliknya.
+- Umum digunakan di direktori /tmp untuk melindungi file pengguna lain.
 
-The execute bit allows the file to be executed. Two types of executable files exist: binaries, which the CPU runs directly, and scripts, which must be interpreted by a program such as the shell or Python. By convention scripts begin with a **shebang** line that tells the kernel which interpreter to use.
+### 4. ls: Melihat Atribut File
+- Perintah ls -l menampilkan informasi lengkap tentang file, termasuk izin akses, pemilik, ukuran, dan waktu modifikasi.
 
+### 5. chmod: Mengubah Izin File
+- Menggunakan format oktal atau simbolik.
 ```bash
-#!/usr/bin/perl
+chmod u+w file.txt       # Menambahkan izin write untuk pemilik
+chmod ug=rw,o=r file.txt # Pemilik dan grup bisa baca/tulis, lainnya hanya baca
+chmod a-x file.sh        # Menghapus izin eksekusi untuk semua pengguna
 ```
 
-Nonbinary executable files that do not specify an interpreter are assumed to be **sh** scripts.
-
-The kernel understands the *#!* (shebang) syntax and acts on it directly. However, if the interpreter is not specified completely and correctly, the kernel will refuse refuse the file. The shell then takes over and tries to interpret the file as a shell script.
-
-For a directory, the execute bit (often called the search or scan bit) allows the directory to be entered or passed through as a pathname is evaluated, but not to have its contents listed. THe combination of read and execute bits allows the directory to be read and its contents listed. The combination of write and execute bits allows files to be created, deleted, and renamed within the directory.
-
-### The setuid and setgid bits
-
-The bits with octal values of 4000 and 2000 are the setuid and setgid bits, respectively. When the setuid bit is set on a file, the file's owner is temporarily changed to the file's owner when the file is executed. When the setgid bit is set on a file, the file's group is temporarily changed to the file's group when the file is executed.
-
-When set on a directory, the setgid bit causes newly created files within the directory to take on the group ownership of the directory rather than the default group of the user who created the file. This makes it easier to share files among a group of users.
-
-### The sticky bit
-
-The bit with an octal value of 1000 is the sticky bit. When set on a directory, the sticky bit prevents users from deleting or renaming files that they do not own. This is useful for directories such as **/tmp** that are shared among many users.
-
-### ls: list and inspect files
-
-The **ls** command lists files and directories. It can also be used to inspect the attributes of files and directories.
-
-The **-l** option causes **ls** to display the long format, which includes the file's mode, the number of hard links to the file, the file's owner, the file's group, the file's size in bytes, the file's modification time, and the file's name.
-
-All directories have at least two hard links: one from the directory itself (the **.** entry) and one from its parent directory (the **..** entry).
-
-**ls** output is slightly different for a device file. For example:
-
+### 6. chown: Mengubah Kepemilikan File
+- Mengganti pemilik dan grup file
 ```bash
-$ ls -l /dev/tty0
-crw--w---- 1 root tty 4, 0 Mar  1  2020 /dev/tty0
+chown -R user:group /home/user
+```
+### 7. chgrp: Mengubah Grup File
+- Sama seperti chown, tapi hanya mengubah grup file
+```bash
+chgrp -R users /home/user
 ```
 
-The **c** at the beginning of the line indicates that the file is a character device file. The **4, 0** at the end of the line are the major and minor device numbers.
-
-### chmod: change permissions
-
-The **chmod** command changes the mode of a file. You can use the octal notation or the symbolic notation.
-
-![permissions-encoding](./data/permissions-encoding.png)
-
-Examples of chmod's mnemonic syntax:
-
-| Specifier  | Meaning                                                             |
-| ---------- | ------------------------------------------------------------------- |
-| u+w        | Add write permission for the file's owner                           |
-| ug=rw,o=r  | Gives r/w permission to owner and group, and r permission to others |
-| a-x        | Remove execute permission for all users                             |
-| ug=srx, o= | Set the setuid, setgid, and sticky bits for owner and group (r/x)   |
-| g=u        | Make the group's permissions the same as the owner's                |
-
-**Tips**: You can also specify the modes to be assigned by  copying the mode from another file with the **--reference** option. (e.g. **chmod --reference=sourcefile targetfile**)
-
-### chown: change ownership
-
-The **chown** command changes the owner and group of a file. The **-R** option causes **chown** to change the ownership of the file's contents recursively.
-
+### 8. umask: Mengatur Izin Default
+- Menentukan izin default saat file/direktori baru dibuat.
+- Nilai umask dikurangi dari izin default sistem:
 ```bash
-$ chown -R abdou:users /home/abdou
+umask 022
 ```
-
-### chgrp: change group
-
-The **chgrp** command changes the group of a file. The **-R** option causes **chgrp** to change the group of the file's contents recursively.
-
-```bash
-$ chgrp -R users /home/abdou
-```
-
-### umask: set default permissions
-
-The **umask** command sets the default permissions for new files and directories. The **umask** command is a bit mask that is subtracted from the default permissions to determine the actual permissions.
-
-Exemple:
-
-```bash
-$ umask 022
-```
-
-| Octal | Binary | Perms | Octal | Binary | Perms |
-| ----- | ------ | ----- | ----- | ------ | ----- |
-| 0     | 000    | rwx   | 4     | 100    | -wx   |
-| 1     | 001    | rw-   | 5     | 101    | -w-   |
-| 2     | 010    | r-x   | 6     | 110    | --x   |
-| 3     | 011    | r--   | 7     | 111    | ---   |
-
-For example, **umask 027** allows the rwx to owner, rx to group, and no permissions to others.
 
 ## Access Control Lists
+Access Control Lists (ACLs) adalah fitur yang memperluas model izin tradisional Unix. ACL memungkinkan sebuah file memiliki banyak pemilik dan memberikan hak akses berbeda ke berbagai pengguna atau grup.
 
-The traditional Unix permissions model is simple and effective, but it has limitations. For example, it's difficult to give a file multiple owners, and it's difficult to give a group of users different permissions on different files.
+Setiap aturan dalam ACL disebut Access Control Entry (ACE), yang terdiri dari:
+- User atau grup (bisa berupa nama pengguna, nama grup, atau kata kunci khusus seperti owner dan other).
+- Permission mask (hak akses seperti read, write, execute).
+- Tipe (allow atau deny).
 
-Access Control Lists (ACLs) are a way to extend the traditional Unix permissions model. ACLs allow you to give a file multiple owners and to give a group of users different permissions on different files.
+### Perintah Dasar ACL
 
-Each of the rules within an ACL is called an **access control entry** (ACE). An ACE consists of a **user or group specifier**, a **permission mask**, and a **type**. The user or group specifier can be a user name, a group name, or a special keyword such as **owner** or **other**. The permission mask is a set of permissions, and the type is either **allow** or **deny**.
-
-The **getfacl** command displays the ACL of a file, and the **setfacl** command sets the ACL of a file.
-
+- Melihat ACL suatu file:
 ```bash
-$ getfacl /etc/passwd
+getfacl /etc/passwd
+```
+- Menetapkan ACL suatu file:
+```bash
+setfacl -m u:abdou:rw /etc/passwd
 ```
 
-```bash
-$ setfacl -m u:abdou:rw /etc/passwd
-```
-
-There are two types of ACLs: **POSIX ACLs** and **NFSv4 ACLs**. POSIX ACLs are the traditional Unix ACLs, and NFSv4 ACLs are a newer, more powerful type of ACL.
-
-### Implementation of ACLs
-
-In theory, responsibility for maintaining and enforcing ACLs could be assigned to several different components of the system. ACLs could be implemented by the kernel on behalf of all the system's filesystems, by individual filesystems, or perhaps by higher-level software such as NFS and SMB servers.
+### Jenis ACL
+Terdapat dua jenis ACL utama:
+- POSIX ACLs – Model ACL tradisional yang digunakan pada Unix/Linux.
+- NFSv4 ACLs – Model ACL yang lebih fleksibel dan mendukung fitur tambahan.
 
 ### POSIX ACLs
+POSIX ACLs merupakan model tradisional yang digunakan dalam sistem operasi berbasis Unix, seperti Linux, FreeBSD, dan Solaris.
 
-POSIX ACLs are the traditional Unix ACLs. They are supported by most Unix-like operating systems, including Linux, FreeBSD, and Solaris.
 
-**Entries that can appear in POSIX ACLs**
-
-| Format                | Example         | Sets permissions for      |
-| --------------------- | --------------- | ------------------------- |
-| user::perms           | user:rw-        | The file's owner          |
-| user:username:perms   | user:abdou:rw-  | The user named username   |
-| group::perms          | group:r-x       | The file's group          |
-| group:groupname:perms | group:users:r-x | The group named groupname |
-| mask::perms           | mask::rwx       | The maximum permissions   |
-| other::perms          | other::r--      | Everyone else             |
-
-Example:
-
-```bash
-$ setfacl -m user:abdou:rwx,group:users:rwx,other::r /home/abdou
-
-$ getfacl --omit-header /home/abdou
-
-user::rwx
-user:abdou:rwx
-group::r-x
-group:users:r-x
-mask::rwx
-other::r--
-```
+| Format	                | Contoh	        | Menetapkan izin untuk     |
+|-------------------------|-----------------|---------------------------|
+| uer::perms		          |user:rw-         | Pemilik file              |
+| user:username:perms	    | user:abdou:rw-	| Pengguna tertentu         |
+| group::perms		        | group:r-x       | Grup pemilik file         |
+| group:groupname:perms	  | group:users:r-x	| Grup tertentu             |
+| mask::perms		          | mask::rwx       | Izin maksimal yang berlaku|
+| other::perms	          | other::r--	    | Pengguna lain             |
 
 ### NFSv4 ACLs
 
-NFSv4 ACLs are a newer, more powerful type of ACL. They are supported by some Unix-like operating systems, including Linux and FreeBSD.
+NFSv4 ACLs adalah versi yang lebih canggih dibandingkan POSIX ACLs, dengan fitur tambahan seperti default ACL, yang memungkinkan pengaturan hak akses otomatis untuk file dan direktori yang baru dibuat. NFSv4 ACLs banyak digunakan dalam sistem berbasis jaringan seperti NFS (Network File System).
 
-NFSv4 ACLs are similar to POSIX ACLs, but they have some additional features. For example, NFSv4 ACLs have a **default ACL** that is used to set the ACL of new files and directories.
-
-**NFSv4 file permissions**
-
-![nsfv4](./data/nfs4.png)
+Keunggulan NFSv4 ACLs
+- Memiliki lebih banyak tipe izin yang lebih fleksibel.
+- Mendukung daftar izin bawaan (default ACL).
+- Cocok untuk lingkungan jaringan yang kompleks.
