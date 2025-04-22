@@ -87,7 +87,7 @@ Untuk konfigurasi zones, pertama saya akan mengonfigurasi file `kelompok8.com`
 sudo nano kelompok8.com
 ```
 
-![img](img/kelompok9.com.png)
+![img](img/kelompok8.com.png)
 
 selanjutnya file '1.200.168.192.db'
 
